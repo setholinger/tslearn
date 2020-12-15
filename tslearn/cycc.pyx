@@ -43,9 +43,41 @@ def normalized_cc(numpy.ndarray[DTYPE_t, ndim=2] s1, numpy.ndarray[DTYPE_t, ndim
 
 @cython.boundscheck(False) # turn off bounds-checking for entire function
 @cython.wraparound(False)  # turn off negative index wrapping for entire function
+# below is the modified cc function for multiple component data
+def normalized_cc_multi_component(numpy.ndarray[DTYPE_t, ndim=2] s1, numpy.ndarray[DTYPE_t, ndim=2] s2, int n_component):
+    assert s1.dtype == DTYPE and s2.dtype == DTYPE
+    assert s1.shape[1] == s2.shape[1]
+    cdef DTYPE_t s = 0.
+    cdef int sz = s1.shape[0]/n_component
+    cdef int d = s1.shape[1]
+    # Compute fft size based on tip from
+    # https://stackoverflow.com/questions/14267555/how-can-i-find-the-smallest-power-of-2-greater-than-n-in-python
+    cdef int fft_sz = 1 << bit_length(2 * sz - 1)
+    cdef float denom = 0.
+    cdef float norm_cc_sum = 0.
+    cdef numpy.ndarray[DTYPE_t, ndim=2] cc
+
+    for i in range(n_component):
+        norm1 = numpy.linalg.norm(s1[i*sz:(i+1)*sz])
+        norm2 = numpy.linalg.norm(s2[i*sz:(i+1)*sz])
+
+        denom = norm1 * norm2
+        if denom < 1e-9:  # To avoid NaNs
+            denom = numpy.inf
+
+        cc = numpy.real(numpy.fft.ifft(numpy.fft.fft(s1[i*sz:(i+1)*sz], fft_sz, axis=0) *
+                                       numpy.conj(numpy.fft.fft(s2[i*sz:(i+1)*sz], fft_sz, axis=0)), axis=0))
+        cc = numpy.vstack((cc[-(sz-1):], cc[:sz]))
+        norm_cc_max = max(numpy.real(cc).sum(axis=-1) / denom)
+        norm_cc_sum = norm_cc_sum + norm_cc_max
+
+    return norm_cc_sum / n_component
+
+@cython.boundscheck(False) # turn off bounds-checking for entire function
+@cython.wraparound(False)  # turn off negative index wrapping for entire function
 def cdist_normalized_cc(numpy.ndarray[DTYPE_t, ndim=3] dataset1, numpy.ndarray[DTYPE_t, ndim=3] dataset2,
                         numpy.ndarray[DTYPE_t, ndim=1] norms1, numpy.ndarray[DTYPE_t, ndim=1] norms2,
-                        bool self_similarity):
+                        bool self_similarity, int n_component=1):
     assert dataset1.dtype == DTYPE and dataset2.dtype == DTYPE
     assert dataset1.shape[2] == dataset2.shape[2]
     cdef int i = 0
@@ -64,9 +96,11 @@ def cdist_normalized_cc(numpy.ndarray[DTYPE_t, ndim=3] dataset1, numpy.ndarray[D
             elif self_similarity and i == j:
                 dists[i, j] = 0.
             else:
-                dists[i, j] = normalized_cc(dataset1[i], dataset2[j], norm1=norms1[i], norm2=norms2[j]).max()
+                if n_component > 1:
+                    dists[i, j] = normalized_cc_multi_component(dataset1[i], dataset2[j], n_component)
+                else:
+                    dists[i, j] = normalized_cc(dataset1[i], dataset2[j], norm1=norms1[i], norm2=norms2[j]).max()
     return dists
-
 
 @cython.boundscheck(False) # turn off bounds-checking for entire function
 @cython.wraparound(False)  # turn off negative index wrapping for entire function

@@ -2,7 +2,7 @@
 The :mod:`tslearn.clustering` module gathers time series specific clustering
 algorithms.
 
-**User guide:** See the :ref:`Clustering <clustering>` section for further 
+**User guide:** See the :ref:`Clustering <clustering>` section for further
  details.
 """
 
@@ -181,7 +181,7 @@ def _compute_inertia(distances, assignments, squared=True):
 
 
 def silhouette_score(X, labels, metric=None, sample_size=None,
-                     metric_params=None, n_jobs=None, verbose=0, 
+                     metric_params=None, n_jobs=None, verbose=0,
                      random_state=None, **kwds):
     """Compute the mean Silhouette Coefficient of all samples (cf.  [1]_ and
     [2]_).
@@ -228,7 +228,7 @@ def silhouette_score(X, labels, metric=None, sample_size=None,
 
     verbose : int (default: 0)
         If nonzero, print information about the inertia while learning
-        the model and joblib progress messages are printed.  
+        the model and joblib progress messages are printed.
 
     random_state : int, RandomState instance or None, optional (default: None)
         The generator used to randomly select a subset of samples.  If int,
@@ -328,7 +328,7 @@ class KernelKMeans(ClusterMixin, BaseModelPackage, TimeSeriesBaseEstimator):
     ----------
     n_clusters : int (default: 3)
         Number of clusters to form.
-        
+
     kernel : string, or callable (default: "gak")
         The kernel should either be "gak", in which case the Global Alignment
         Kernel from [2]_ is used or a value that is accepted as a metric
@@ -349,12 +349,12 @@ class KernelKMeans(ClusterMixin, BaseModelPackage, TimeSeriesBaseEstimator):
         Number of time the k-means algorithm will be run with different
         centroid seeds. The final results will be the
         best output of n_init consecutive runs in terms of inertia.
-        
+
     kernel_params : dict or None (default: None)
         Kernel parameters to be passed to the kernel function.
         None means no kernel parameter is set.
-        For Global Alignment Kernel, the only parameter of interest is `sigma`. 
-        If set to 'auto', it is computed based on a sampling of the training 
+        For Global Alignment Kernel, the only parameter of interest is `sigma`.
+        If set to 'auto', it is computed based on a sampling of the training
         set
         (cf :ref:`tslearn.metrics.sigma_gak <fun-tslearn.metrics.sigma_gak>`).
         If no specific value is set for `sigma`, its defaults to 1.
@@ -363,10 +363,10 @@ class KernelKMeans(ClusterMixin, BaseModelPackage, TimeSeriesBaseEstimator):
         Bandwidth parameter for the Global Alignment kernel. If set to 'auto',
         it is computed based on a sampling of the training set
         (cf :ref:`tslearn.metrics.sigma_gak <fun-tslearn.metrics.sigma_gak>`)
-        
+
         .. deprecated:: 0.4
-            Setting `sigma` directly as a parameter for KernelKMeans and 
-            GlobalAlignmentKernelKMeans is deprecated in version 0.4 and will 
+            Setting `sigma` directly as a parameter for KernelKMeans and
+            GlobalAlignmentKernelKMeans is deprecated in version 0.4 and will
             be removed in 0.6. Use `kernel_params` instead.
 
     n_jobs : int or None, optional (default=None)
@@ -378,7 +378,7 @@ class KernelKMeans(ClusterMixin, BaseModelPackage, TimeSeriesBaseEstimator):
         for more details.
 
     verbose : int (default: 0)
-        If nonzero, joblib progress messages are printed.  
+        If nonzero, joblib progress messages are printed.
 
     random_state : integer or numpy.RandomState, optional
         Generator used to initialize the centers. If an integer is given, it
@@ -722,7 +722,7 @@ class TimeSeriesKMeans(TransformerMixin, ClusterMixin,
 
     verbose : int (default: 0)
         If nonzero, print information about the inertia while learning
-        the model and joblib progress messages are printed.  
+        the model and joblib progress messages are printed.
 
     random_state : integer or numpy.RandomState, optional
         Generator used to initialize the centers. If an integer is given, it
@@ -1034,8 +1034,8 @@ class TimeSeriesKMeans(TransformerMixin, ClusterMixin,
 
     def transform(self, X):
         """Transform X to a cluster-distance space.
-        
-        In the new space, each dimension is the distance to the cluster 
+
+        In the new space, each dimension is the distance to the cluster
         centers.
 
         Parameters
@@ -1134,7 +1134,7 @@ class KShape(ClusterMixin, TimeSeriesCentroidBasedClusteringMixin,
     """
 
     def __init__(self, n_clusters=3, max_iter=100, tol=1e-6, n_init=1,
-                 verbose=False, random_state=None, init='random'):
+                 verbose=False, random_state=None, init='random',n_component=1):
         self.n_clusters = n_clusters
         self.max_iter = max_iter
         self.tol = tol
@@ -1142,6 +1142,7 @@ class KShape(ClusterMixin, TimeSeriesCentroidBasedClusteringMixin,
         self.n_init = n_init
         self.verbose = verbose
         self.init = init
+        self.n_component = n_component
 
     def _is_fitted(self):
         """
@@ -1189,7 +1190,7 @@ class KShape(ClusterMixin, TimeSeriesCentroidBasedClusteringMixin,
         return 1. - cdist_normalized_cc(X, self.cluster_centers_,
                                         norms1=self.norms_,
                                         norms2=self.norms_centroids_,
-                                        self_similarity=False)
+                                        self_similarity=False,n_component=self.n_component)
 
     def _assign(self, X):
         dists = self._cross_dists(X)
