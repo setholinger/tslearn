@@ -1160,8 +1160,8 @@ class KShape(ClusterMixin, TimeSeriesCentroidBasedClusteringMixin,
     def _shape_extraction(self, X, k):
         sz = X.shape[1]
         Xp = y_shifted_sbd_vec(self.cluster_centers_[k], X[self.labels_ == k],
-                               norm_ref=-1,
-                               norms_dataset=self.norms_[self.labels_ == k])
+                               norm_ref=-1, norms_dataset=self.norms_[self.labels_ == k],
+                               n_component=self.n_component)
         S = numpy.dot(Xp[:, :, 0].T, Xp[:, :, 0])
         Q = numpy.eye(sz) - numpy.ones((sz, sz)) / sz
         M = numpy.dot(Q.T, numpy.dot(S, Q))
