@@ -98,15 +98,11 @@ def cdist_normalized_cc(numpy.ndarray[DTYPE_t, ndim=3] dataset1, numpy.ndarray[D
                 dists[i, j] = 0.
             else:
                 if n_component > 1:
-                # old way is to call now-commented function normalized_cc_multi_component
-                    #cc_sum = normalized_cc_multi_component(dataset1[i], dataset2[j], n_component)
-                    #print("old version gives " + str(cc_sum))
-                    cc_sum = 0
+                    cc_sum = numpy.zeros((2 * sz - 1))
                     for n in range(n_component):
-                        cc = normalized_cc(dataset1[i, n*sz:(n+1)*sz], dataset2[j, n*sz:(n+1)*sz]).max()
+                        cc = normalized_cc(dataset1[i, n*sz:(n+1)*sz], dataset2[j, n*sz:(n+1)*sz])
                         cc_sum = cc_sum + cc
-                    dists[i, j] = cc_sum/n_component
-                    #print("new version gives " + str(dists[i,j]))
+                    dists[i, j] = cc_sum.max()/n_component
                 else:
                     dists[i, j] = normalized_cc(dataset1[i], dataset2[j], norm1=norms1[i], norm2=norms2[j]).max()
     return dists
@@ -129,21 +125,18 @@ def y_shifted_sbd_vec(numpy.ndarray[DTYPE_t, ndim=2] ref_ts, numpy.ndarray[DTYPE
 
     for i in range(dataset.shape[0]):
         if n_component > 1:
-            all_component_shifted = numpy.zeros((sz*n_component,1))
+            cc_sum = numpy.zeros((2 * sz - 1))
             for n in range(n_component):
-                component_shifted = numpy.zeros((sz,1))
-                component_data = dataset[i, n*sz:(n+1)*sz]
-                cc = normalized_cc(ref_ts[n*sz:(n+1)*sz], component_data)
-                idx = numpy.argmax(cc)
-                shift = idx - sz
-                if shift > 0:
-                    component_shifted[shift:] = component_data[:-shift]
-                elif shift < 0:
-                    component_shifted[:shift] = component_data[-shift:]
-                else:
-                    component_shifted = component_data
-                all_component_shifted[n*sz:(n+1)*sz] = component_shifted
-            dataset_shifted[i] = all_component_shifted
+                cc = normalized_cc(ref_ts[n*sz:(n+1)*sz], dataset[i, n*sz:(n+1)*sz])
+                cc_sum = cc_sum + cc
+            idx = numpy.argmax(cc_sum)
+            shift = idx - sz
+            if shift > 0:
+                dataset_shifted[i, shift:] = dataset[i,:-shift,:]
+            elif shift < 0:
+                dataset_shifted[i, :shift] = dataset[i,-shift:,:]
+            else:
+                dataset_shifted[i] = dataset[i]
         else:
             cc = normalized_cc(ref_ts, dataset[i], norm1=norm_ref, norm2=norms_dataset[i])
             idx = numpy.argmax(cc)
