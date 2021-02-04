@@ -1134,7 +1134,7 @@ class KShape(ClusterMixin, TimeSeriesCentroidBasedClusteringMixin,
     """
 
     def __init__(self, n_clusters=3, max_iter=100, tol=1e-6, n_init=1,
-                 verbose=False, random_state=None, init='random',n_component=1):
+                 verbose=False, random_state=None, init='random',n_component=1,mode="max"):
         self.n_clusters = n_clusters
         self.max_iter = max_iter
         self.tol = tol
@@ -1143,7 +1143,7 @@ class KShape(ClusterMixin, TimeSeriesCentroidBasedClusteringMixin,
         self.verbose = verbose
         self.init = init
         self.n_component = n_component
-
+        self.mode = mode
     def _is_fitted(self):
         """
         Check if the model has been fit.
@@ -1161,7 +1161,7 @@ class KShape(ClusterMixin, TimeSeriesCentroidBasedClusteringMixin,
         sz = X.shape[1]
         Xp = y_shifted_sbd_vec(self.cluster_centers_[k], X[self.labels_ == k],
                                norm_ref=-1, norms_dataset=self.norms_[self.labels_ == k],
-                               n_component=self.n_component)
+                               n_component=self.n_component,mode=self.mode)
         S = numpy.dot(Xp[:, :, 0].T, Xp[:, :, 0])
         Q = numpy.eye(sz) - numpy.ones((sz, sz)) / sz
         M = numpy.dot(Q.T, numpy.dot(S, Q))
@@ -1190,7 +1190,7 @@ class KShape(ClusterMixin, TimeSeriesCentroidBasedClusteringMixin,
         return 1. - cdist_normalized_cc(X, self.cluster_centers_,
                                         norms1=self.norms_,
                                         norms2=self.norms_centroids_,
-                                        self_similarity=False,n_component=self.n_component)
+                                        self_similarity=False,n_component=self.n_component,mode=self.mode)
 
     def _assign(self, X):
         dists = self._cross_dists(X)
